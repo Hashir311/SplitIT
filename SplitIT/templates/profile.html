@@ -1,6 +1,14 @@
 {% extends "dashboard_base.html" %} 
 {% block content %}
 
+{% if messages %}
+<div class="alert alert-danger" role="alert">
+  {% for message in messages %}
+    <p>{{ message }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
 <h2>Hello, {{ first_name }} {{ last_name }},</h2>
 <h3>Email: {{ email }}</h3>
 <h3>About: {{ about }}</h3>
@@ -8,6 +16,10 @@
 
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
   Update Profile  
+</button>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+  Reset Password
 </button>
 
 <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
@@ -35,6 +47,35 @@
           </div>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <input type="submit" name="update_profile" value="Apply Changes" class="btn btn-primary" />
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="resetPasswordModalLabel">Reset Password</h1>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'reset_password' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="current_password" class="form-label">Current Password</label>
+            <input type="password" class="form-control" name="current_password" required>
+          </div>
+          <div class="mb-3">
+            <label for="new_password" class="form-label">New Password</label>
+            <input type="password" class="form-control" name="new_password" required>
+          </div>
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm New Password</label>
+            <input type="password" class="form-control" name="confirm_password" required>
+          </div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Reset Password</button>
         </form>
       </div>
     </div>
