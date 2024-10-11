@@ -82,6 +82,33 @@ def profile(request):
     return render(request, "profile.html", context)
 
 
+@login_required(login_url="login")
+def reset_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        user = request.user
+        errors = []
+
+        if not user.check_password(current_password):
+            errors.append("Incorrect current password.")
+        elif new_password != confirm_password:
+            errors.append("New Password and Confirm Password do not match.")
+
+        if errors:
+            messages.error(request, " ".join(errors))
+            return redirect('profile') 
+        user.set_password(new_password)
+        user.save()
+        messages.success(request, "Password reset successfully! Please log in again.")
+        auth_logout(request) 
+        return redirect("login")
+
+    return redirect('profile')
+
+
 def aboutus(request):
     return render(request, "aboutus.html")
 
