@@ -1,0 +1,30 @@
+{%extends "dashboard_base.html" %} {% block content %}
+<h1>Detailed Summary</h1>
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-6">
+      <h4>You Owe</h4>
+      <ul class="list-group">
+        {% for i in owe%}
+        <li class="list-group-item">{{i.amount}} to {{i.name}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h4>You Are Owed</h4>
+      <ul class="list-group">
+        {% for i in owed%}
+        <li class="list-group-item">{{i.amount}} from {{i.name}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+<style>
+  h1,
+  .row h4 {
+    color: #ffffff;
+  }
+</style>
+
+{% endblock %}
