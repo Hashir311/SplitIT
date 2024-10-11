@@ -33,5 +33,6 @@ urlpatterns = [
     path("group/expense", views.expense, name="expense"),
     path("group/add_member", views.add_member, name="add_member"),
     path("group/delete_group", views.delete_group, name="delete_group"),
-    path('reset-password/', views.reset_password, name='reset_password'),
+    path("reset-password/", views.reset_password, name="reset_password"),
+    path("summary-details/", views.summary_details, name="summary_details"),
 ]

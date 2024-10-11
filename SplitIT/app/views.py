@@ -104,9 +104,9 @@ def profile(request):
 @login_required(login_url="login")
 def reset_password(request):
     if request.method == "POST":
-        current_password = request.POST.get('current_password')
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
 
         user = request.user
         errors = []
@@ -118,14 +118,14 @@ def reset_password(request):
 
         if errors:
             messages.error(request, " ".join(errors))
-            return redirect('profile') 
+            return redirect("profile")
         user.set_password(new_password)
         user.save()
         messages.success(request, "Password reset successfully! Please log in again.")
-        auth_logout(request) 
+        auth_logout(request)
         return redirect("login")
 
-    return redirect('profile')
+    return redirect("profile")
 
 
 def aboutus(request):
@@ -279,3 +279,32 @@ def delete_group(request):
         return redirect("dashboard")
     else:
         return HttpResponse("Invalid request method.", status=400)
+
+
+@login_required(login_url="login")
+def summary_details(request):
+    if request.method == "GET":
+        user = request.user
+        summary_details = SummaryDetails.objects.filter(
+            Q(payer=user) | Q(paid_for=user)
+        )
+        owe = []
+        owed = []
+        for i in summary_details:
+            if i.payer == user:
+
+                if i.amount > 0:
+                    obj = {"name": i.paid_for.username, "amount": i.amount}
+                    owed.append(obj)
+                else:
+                    obj = {"name": i.paid_for.username, "amount": -i.amount}
+                    owe.append(obj)
+            else:
+                if i.amount > 0:
+                    obj = {"name": i.payer.username, "amount": i.amount}
+                    owe.append(obj)
+                else:
+                    obj = {"name": i.payer.username, "amount": -i.amount}
+                    owed.append(obj)
+
+        return render(request, "summary_details.html", {"owe": owe, "owed": owed})
