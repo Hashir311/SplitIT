@@ -65,3 +65,30 @@ class Settle(models.Model):
 
     def __str__(self):
         return f"Settle for Expense {self.expense.expense_id} - Settled: {self.settled}"
+
+
+class SummaryDetails(models.Model):
+    payer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="payer", verbose_name="Payer"
+    )
+    paid_for = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="paid_for", verbose_name="Paid For"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("payer", "paid_for")
+
+    def __str__(self):
+        return f"{self.payer.username} paid ${self.amount:.2f} for {self.paid_for.username}"
+
+
+class Summary(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    owes = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_spent = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    on_self = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.user.username} owes ${self.owes}"

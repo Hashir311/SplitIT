@@ -3,10 +3,23 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
-from .models import Group, GroupMember, Expense, ExpenseShare, Settle, Profile
+from django.db import transaction
+from django.db.models import Q
+
+from .models import (
+    Group,
+    GroupMember,
+    Expense,
+    ExpenseShare,
+    Settle,
+    Profile,
+    Summary,
+    SummaryDetails,
+)
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.db.models import Prefetch
+from decimal import Decimal
 
 
 # Create your views here.
@@ -58,7 +71,12 @@ def signup(request):
 def dashboard(request):
     user = request.user
     groups = GroupMember.objects.filter(user=user).select_related("group")
-    return render(request, "group_list.html", {"groups": groups, "current_user": user})
+    summary, created = Summary.objects.get_or_create(user=user)
+    return render(
+        request,
+        "group_list.html",
+        {"groups": groups, "current_user": user, "summary": summary},
+    )
 
 
 @login_required(login_url="login")
@@ -71,8 +89,9 @@ def profile(request):
         profile.gender = request.POST.get("gender", profile.gender)
         profile.save()
         return redirect("profile")  # Redirect to the profile page after updating
-
+    summary, created = Summary.objects.get_or_create(user=user)
     context = {
+        "summary": summary,
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
@@ -83,7 +102,8 @@ def profile(request):
 
 
 def aboutus(request):
-    return render(request, "aboutus.html")
+    summary, created = Summary.objects.get_or_create(user=request.user)
+    return render(request, "aboutus.html", {"summary": summary})
 
 
 def logout(request):
@@ -96,7 +116,7 @@ def create_group(request):
     if request.method == "POST":
         name = request.POST.get("group-name")
         description = request.POST.get("group-description")
-        print(name, description)
+        # print(name, description)
         group = Group.objects.create(
             group_name=name, group_description=description, created_by=request.user
         )
@@ -121,7 +141,7 @@ def group(request):
         )
     )
     members = GroupMember.objects.filter(group_id=group_id).select_related("user")
-
+    summary, created = Summary.objects.get_or_create(user=user)
     return render(
         request,
         "group.html",
@@ -130,6 +150,7 @@ def group(request):
             "current_user": user,
             "group": group,
             "members": members,
+            "summary": summary,
         },
     )
 
@@ -139,18 +160,63 @@ def expense(request):
     user = request.user
     group = request.POST.get("group_id")
     details = request.POST.get("expense-details")
-    amount = request.POST.get("amount-spent")
+    amount = Decimal(request.POST.get("amount-spent"))
     members = request.POST.getlist("options")
     group = get_object_or_404(Group, group_id=int(group))
     request.session["group_id"] = group.group_id
 
+    y, created = Summary.objects.get_or_create(user=user)
+    y.total_spent += amount
+    y.save()
+
     new_expense = Expense.objects.create(
         user=user, group=group, amount=amount, description=details
     )
-    share = float(new_expense.amount) / len(members)
+    share = new_expense.amount / len(members)
     for i in members:
         x = get_object_or_404(User, username=i)
+
+        if x == user:
+            y.on_self += share
+            y.save()
+        else:
+            try:
+                y_details = get_object_or_404(SummaryDetails, payer=x, paid_for=user)
+                y_details.amount -= share
+                y_details.save()
+            except:
+                z, created = SummaryDetails.objects.get_or_create(
+                    payer=user, paid_for=x
+                )
+                z.amount += share
+                z.save()
+            # with transaction.atomic():
+            #     a, created = Summary.objects.get_or_create(user=user)
+            #     print(f"BEFORE: {a.user.username} owes {a.owes}")
+            #     a.owes -= share
+            #     print(f"AFTER: {a.user.username} owes {a.owes}")
+            #     a.save()
+
+            #     b, created = Summary.objects.get_or_create(user=x)
+            #     print(f"BEFORE: {b.user.username} owes {b.owes}")
+            #     b.owes += share
+            #     print(f"AFTER: {b.user.username} owes {b.owes}")
+            #     b.save()
+            # print("********************")
         ExpenseShare.objects.create(user=x, expense=new_expense, share=share)
+    for i in members:
+        x = get_object_or_404(User, username=i)
+        summary_details = SummaryDetails.objects.filter(Q(payer=x) | Q(paid_for=x))
+        s = 0
+        for j in summary_details:
+            if j.payer == user:
+                s += j.amount
+            else:
+                s -= j.amount
+        y, created = Summary.objects.get_or_create(user=x)
+        y.owes = -s
+        y.save()
+
     return redirect("group")
 
 
