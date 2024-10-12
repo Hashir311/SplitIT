@@ -252,19 +252,21 @@ def add_member(request):
     if request.method == "POST":
         new_member_username = request.POST.get("username")
         group_id = request.POST.get("group_id")
-        group = get_object_or_404(Group, group_id=int(group_id))
+        group = get_object_or_404(Group, group_id=int(group_id)) 
 
         try:
             user = User.objects.get(username=new_member_username)
         except User.DoesNotExist:
-            return HttpResponse("No such user exists.", status=404)
+            messages.error(request, f"No user exists with username: {new_member_username}")
+            return redirect("group")
 
         if GroupMember.objects.filter(user=user, group=group).exists():
-            return HttpResponse(f"{user.username} is already a member.", status=400)
+            messages.error(request, "Already a member")
+            return redirect("group")
 
         GroupMember.objects.create(user=user, group=group)
         request.session["group_id"] = group.group_id
-
+        messages.success(request, "Member added successfully")
         return redirect("group")
     else:
         return HttpResponse("Invalid request method.", status=400)
