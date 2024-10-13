@@ -273,6 +273,18 @@ def add_member(request):
 
 
 @login_required(login_url="login")
+def group_details(request, group_id):
+    group = get_object_or_404(Group, group_id=group_id)
+    members = GroupMember.objects.filter(group=group).select_related('user')
+
+    context = {
+        'group': group,
+        'members': members,
+    }
+
+    return render(request, 'group.html', context)
+
+@login_required(login_url="login")
 def delete_group(request):
     if request.method == "POST":
         group_id = request.POST.get("group_id")

@@ -18,17 +18,15 @@
   <div>
     <button
       type="button"
-      id="add-expense"
-      class="btn btn-primary"
+      id="openModalBtn"
+      class="btn btn-primary add-expense "
       data-bs-toggle="modal"
-      data-bs-target="#add_member"
     >
-      Add Member
+      View Members
     </button>
     <button
       type="button"
-      id="add-expense"
-      class="btn btn-primary"
+      class="btn btn-primary add-expense "
       data-bs-toggle="modal"
       data-bs-target="#add_expense"
     >
@@ -154,53 +152,6 @@
 
 <div
   class="modal fade"
-  id="add_member"
-  tabindex="-1"
-  aria-labelledby="add_memberLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="add_memberLabel">Add a member</h1>
-      </div>
-      <div class="modal-body">
-        <form action="{% url 'add_member' %}" method="POST">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="username" class="col-form-label">Enter Username:</label>
-            <input
-              type="text"
-              class="form-control"
-              name="username"
-              id="username"
-              placeholder="gavin@hooli.com"
-              required
-            />
-          </div>
-
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Close
-          </button>
-          <input
-            type="submit"
-            class="btn btn-primary"
-            name="add-member"
-            value="Add Member"
-          />
-          <input type="hidden" name="group_id" value="{{ group.group_id }}" />
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div
-  class="modal fade"
   id="view-expense"
   tabindex="-1"
   aria-labelledby="view-expenseLabel"
@@ -225,6 +176,60 @@
   </div>
 </div>
 
+<div id="membersModal" class="member-modal" style="display:none;">
+  <div class="member-modal-content">
+    <span class="member-close">&times;</span>
+    <h3>Group Members</h3>
+    <ul id="membersList">
+      {% for member in members %}
+      <li>{{ member.user.username }}</li>
+  {% empty %}
+      <li>No members in this group.</li>
+  {% endfor %}
+    </ul>
+    <button class="btn btn-primary" id="showAddMemberFormBtn">Add Member</button>
+    <div id="addMemberForm" style="display:none; margin-top: 20px;">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="add_memberLabel">Add a member</h1>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'add_member' %}" method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="username" class="col-form-label">Enter Username:</label>
+            <input
+              type="text"
+              class="form-control"
+              name="username"
+              id="username"
+              placeholder="gavin@hooli.com"
+              required
+            />
+          </div>
+
+          <input type="hidden" name="group_id" value="{{ group.group_id }}" />
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="closeAddMemberFormBtn"
+            >
+              Close
+            </button>
+            <input
+              type="submit"
+              class="btn btn-primary"
+              name="add-member"
+              value="Add"
+            />
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   h1 {
     color: white;
@@ -240,7 +245,7 @@
     padding-right: 45px;
   }
 
-  #add-expense {
+  .add-expense {
     background-color: #ffcc00;
     height: 50%;
   }
@@ -276,6 +281,7 @@
   }
   .modal-body {
     background-color: #ffcc00;
+    padding: 15px;
   }
   .modal-content {
     border: white 2px solid;
@@ -304,6 +310,40 @@
     background-color: #f8d7da;
     color: #721c24;
   }
+  .member-modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+  }
+
+  .member-modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+  }
+
+  .member-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  .member-close:hover,
+  .member-close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
 </style>
 <script>
   setTimeout(function() {
@@ -311,6 +351,30 @@
     if (messages) {
       messages.style.display = 'none';
     }
-  }, 5000);  // Hide after 5 seconds (5000 milliseconds)
+  }, 5000);
+var modal = document.getElementById("membersModal");
+var btn = document.getElementById("openModalBtn");
+var span = document.getElementsByClassName("member-close")[0];
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+span.onclick = function() {
+  modal.style.display = "none";
+}
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+function openAddMemberForm() {
+  window.location.href = '/add-member'; 
+}
+document.getElementById('showAddMemberFormBtn').addEventListener('click', function() {
+    document.getElementById('addMemberForm').style.display = 'block';
+});
+
+document.getElementById('closeAddMemberFormBtn').addEventListener('click', function() {
+    document.getElementById('addMemberForm').style.display = 'none';
+});
 </script>
 {%endblock %}
