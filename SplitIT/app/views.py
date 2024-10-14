@@ -252,12 +252,14 @@ def add_member(request):
     if request.method == "POST":
         new_member_username = request.POST.get("username")
         group_id = request.POST.get("group_id")
-        group = get_object_or_404(Group, group_id=int(group_id)) 
+        group = get_object_or_404(Group, group_id=int(group_id))
 
         try:
             user = User.objects.get(username=new_member_username)
         except User.DoesNotExist:
-            messages.error(request, f"No user exists with username: {new_member_username}")
+            messages.error(
+                request, f"No user exists with username: {new_member_username}"
+            )
             return redirect("group")
 
         if GroupMember.objects.filter(user=user, group=group).exists():
@@ -271,18 +273,6 @@ def add_member(request):
     else:
         return HttpResponse("Invalid request method.", status=400)
 
-
-@login_required(login_url="login")
-def group_details(request, group_id):
-    group = get_object_or_404(Group, group_id=group_id)
-    members = GroupMember.objects.filter(group=group).select_related('user')
-
-    context = {
-        'group': group,
-        'members': members,
-    }
-
-    return render(request, 'group.html', context)
 
 @login_required(login_url="login")
 def delete_group(request):
