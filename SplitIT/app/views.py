@@ -200,10 +200,12 @@ def expense(request):
         user=user, group=group, amount=amount, description=details
     )
     share = new_expense.amount / len(members)
+    flag = 0  # a flag to check if user is in the list of members
     for i in members:
         x = get_object_or_404(User, username=i)
 
         if x == user:
+            flag += 1  # if user is in the list of members, then flag = 1
             y.on_self += share
             y.save()
         else:
@@ -217,19 +219,6 @@ def expense(request):
                 )
                 z.amount += share
                 z.save()
-            # with transaction.atomic():
-            #     a, created = Summary.objects.get_or_create(user=user)
-            #     print(f"BEFORE: {a.user.username} owes {a.owes}")
-            #     a.owes -= share
-            #     print(f"AFTER: {a.user.username} owes {a.owes}")
-            #     a.save()
-
-            #     b, created = Summary.objects.get_or_create(user=x)
-            #     print(f"BEFORE: {b.user.username} owes {b.owes}")
-            #     b.owes += share
-            #     print(f"AFTER: {b.user.username} owes {b.owes}")
-            #     b.save()
-            # print("********************")
         ExpenseShare.objects.create(user=x, expense=new_expense, share=share)
     for i in members:
         x = get_object_or_404(User, username=i)
@@ -243,7 +232,19 @@ def expense(request):
         y, created = Summary.objects.get_or_create(user=x)
         y.owes = -s
         y.save()
-
+    if flag == 0:
+        summary_details = SummaryDetails.objects.filter(
+            Q(payer=user) | Q(paid_for=user)
+        )
+        s = 0
+        for j in summary_details:
+            if j.payer == user:
+                s += j.amount
+            else:
+                s -= j.amount
+        y, created = Summary.objects.get_or_create(user=user)
+        y.owes = -s
+        y.save()
     return redirect("group")
 
 
@@ -310,5 +311,9 @@ def summary_details(request):
                 else:
                     obj = {"name": i.payer.username, "amount": -i.amount}
                     owed.append(obj)
-
-        return render(request, "summary_details.html", {"owe": owe, "owed": owed})
+        summary, created = Summary.objects.get_or_create(user=user)
+        return render(
+            request,
+            "summary_details.html",
+            {"owe": owe, "owed": owed, "summary": summary},
+        )

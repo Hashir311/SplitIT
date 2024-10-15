@@ -41,7 +41,7 @@
           <h3>Summary</h3>
           <h4>Total Amount Spent:{{summary.total_spent}}</h4>
           <h4>Amount Spent on self:{{summary.on_self}}</h4>
-          {%if summary.owes < 0%}
+          {%if summary.owes|check_negative %}
           <h4>You are owed: {{summary.owes|negate}}</h4>
           {%else%}
           <h4>You owe: {{summary.owes}}</h4>
