@@ -50,11 +50,11 @@ Thank you for considering contributing to our Django project! We appreciate your
 
    - Make the necessary changes to the codebase. Be sure to follow our coding conventions and best practices.
 
-6. **Run Tests**
+6. **Launch webapp**
 
-   - Before submitting your pull request, run the tests to ensure everything works as expected:
+   - Before submitting your pull request, launch and check  to ensure everything works as expected:
      ```bash
-     python manage.py test
+     python manage.py runserver
      ```
 
 7. **Commit Your Changes**
