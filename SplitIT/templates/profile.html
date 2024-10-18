@@ -10,9 +10,9 @@
 {% endif %}
 
 <h2>Hello, {{ first_name }} {{ last_name }},</h2>
-<h3>Email: {{ email }}</h3>
-<h3>About: {{ about }}</h3>
-<h3>Gender: {{ gender }}</h3>
+<h3 id="details">Email: {{ email }}</h3>
+<h3 id="details">About: {{ about }}</h3>
+<h3 id="details">Gender: {{ gender }}</h3>
 
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#profileModal">
   Update Profile  
@@ -94,6 +94,9 @@
   }
   .modal-content {
     border: white 2px solid;
+  }
+  #details{
+    color:#cccccc
   }
 </style>
 {% endblock %}
