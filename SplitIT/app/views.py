@@ -27,6 +27,20 @@ def home(request):
     return render(request, "home.html")
 
 
+@login_required(login_url="login")
+def dash(request):
+    user = request.user
+    summary, created = Summary.objects.get_or_create(user=user)
+    group_count = GroupMember.objects.filter(user=user).count()
+    g = Profile.objects.get(user=user).gender
+    gender = 0 if g == "M" else 1
+    return render(
+        request,
+        "dash.html",
+        {"summary": summary, "group_count": group_count, "gender": gender},
+    )
+
+
 def login(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -68,14 +82,16 @@ def signup(request):
 
 
 @login_required(login_url="login")
-def dashboard(request):
+def groups(request):
     user = request.user
     groups = GroupMember.objects.filter(user=user).select_related("group")
-    summary, created = Summary.objects.get_or_create(user=user)
     return render(
         request,
         "group_list.html",
-        {"groups": groups, "current_user": user, "summary": summary},
+        {
+            "groups": groups,
+            "current_user": user,
+        },
     )
 
 
@@ -88,10 +104,8 @@ def profile(request):
         profile.about = request.POST.get("about", profile.about)
         profile.gender = request.POST.get("gender", profile.gender)
         profile.save()
-        return redirect("profile")  # Redirect to the profile page after updating
-    summary, created = Summary.objects.get_or_create(user=user)
+        return redirect("profile")
     context = {
-        "summary": summary,
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
@@ -129,8 +143,7 @@ def reset_password(request):
 
 
 def aboutus(request):
-    summary, created = Summary.objects.get_or_create(user=request.user)
-    return render(request, "aboutus.html", {"summary": summary})
+    return render(request, "aboutus.html")
 
 
 def logout(request):
@@ -143,13 +156,12 @@ def create_group(request):
     if request.method == "POST":
         name = request.POST.get("group-name")
         description = request.POST.get("group-description")
-        # print(name, description)
         group = Group.objects.create(
             group_name=name, group_description=description, created_by=request.user
         )
 
         GroupMember.objects.create(user=request.user, group=group)
-        return redirect("dashboard")
+        return redirect("groups")
 
 
 @login_required(login_url="login")
@@ -168,7 +180,6 @@ def group(request):
         )
     )
     members = GroupMember.objects.filter(group_id=group_id).select_related("user")
-    summary, created = Summary.objects.get_or_create(user=user)
     return render(
         request,
         "group.html",
@@ -177,7 +188,6 @@ def group(request):
             "current_user": user,
             "group": group,
             "members": members,
-            "summary": summary,
         },
     )
 
@@ -281,7 +291,7 @@ def delete_group(request):
         group_id = request.POST.get("group_id")
         group = get_object_or_404(Group, group_id=int(group_id))
         group.delete()
-        return redirect("dashboard")
+        return redirect("groups")
     else:
         return HttpResponse("Invalid request method.", status=400)
 
