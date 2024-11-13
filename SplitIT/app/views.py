@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
+import json
 
 from .models import (
     Group,
@@ -326,4 +327,31 @@ def summary_details(request):
             request,
             "summary_details.html",
             {"owe": owe, "owed": owed, "summary": summary},
+        )
+
+
+@login_required(login_url="login")
+def expenses_details(request):
+    if request.method == "GET":
+        user = request.user
+        expenses = Expense.objects.filter(user=user)
+        d = {}
+        for i in expenses:
+            s = str(i.group.group_name)
+            if s not in d:
+                d[s] = i.amount
+            else:
+                d[s] += i.amount
+
+        groups = []
+        spendings = []
+        for i in d:
+            groups.append(i)
+            spendings.append(int(d[i]))
+        groups_json = json.dumps(groups)
+        spendings_json = json.dumps(spendings)
+        return render(
+            request,
+            "expense_details.html",
+            {"groups": groups_json, "spendings": spendings_json, "expenses": expenses},
         )
